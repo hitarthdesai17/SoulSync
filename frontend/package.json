@@ -1,0 +1,5 @@
+{
+  "name": "companion-platform-frontend",
+  "private": true,
+  "note": "Dependencies (react, vite, etc.) to be added during Phase 7"
+}

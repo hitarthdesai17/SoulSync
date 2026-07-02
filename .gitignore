@@ -1,0 +1,19 @@
+# Secrets - never commit real credentials
+.env
+
+# Python
+__pycache__/
+*.pyc
+venv/
+.venv/
+*.egg-info/
+
+# Node / React
+node_modules/
+dist/
+build/
+
+# Editor/OS junk
+.DS_Store
+.vscode/
+.idea/
