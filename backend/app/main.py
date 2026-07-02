@@ -1,9 +1,7 @@
-"""
-Entry point for the FastAPI backend.
-This file will:
-- Create the FastAPI app instance
-- Register all routes from app/api/
-- Run startup tasks (e.g. connecting to the database)
+from fastapi import FastAPI
 
-Phase 7 will fill this in.
-"""
+app = FastAPI()
+
+@app.get("/")
+def read_root():
+    return {"message": "SoulSync backend is alive"}
