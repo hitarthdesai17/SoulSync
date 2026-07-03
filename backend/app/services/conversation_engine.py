@@ -1,9 +1,14 @@
-"""
-Conversation Engine (see docs/ARCHITECTURE.md, Section 4).
-Orchestrates the full pipeline for a single message:
-1. Glossary check + emotion detection + memory retrieval + personality fetch (parallel)
-2. Final emotion read (using retrieved memory)
-3. Assemble prompt
-4. Call the AI model
-5. Log the message for future memory/personality updates
-"""
+import os
+from dotenv import load_dotenv
+from google import genai
+
+load_dotenv()
+
+client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
+
+def get_ai_response(user_message: str) -> str:
+    response = client.models.generate_content(
+        model="gemini-2.5-flash",
+        contents=user_message
+    )
+    return response.text

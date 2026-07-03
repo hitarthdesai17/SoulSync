@@ -1,2 +1,5 @@
-# Python dependencies - to be filled in during Phase 7
-# Expected: fastapi, uvicorn, supabase, sentence-transformers, anthropic, python-dotenv
+fastapi
+uvicorn
+python-dotenv
+supabase
+google-genai
