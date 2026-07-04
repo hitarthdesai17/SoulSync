@@ -18,7 +18,7 @@ function App() {
     })
     const data = await res.json()
 
-    const aiMessage = { role: 'HitMan', text: data.reply }
+    const aiMessage = { role: 'HitMan1706', text: data.reply }
     setMessages(prev => [...prev, aiMessage])
   }
 
