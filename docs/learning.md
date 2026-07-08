@@ -106,3 +106,64 @@ A real, working chat loop: type a message in React → FastAPI receives it → c
 
 ### Honest note
 Companion display name was changed to "HitMan" in the UI at this stage — currently cosmetic only, not yet wired into an actual personality system. That connection begins in Milestone 2.
+
+---
+
+## Milestone 2 — Companion & Personality Core
+
+### What we built
+A real `companions` database table, backend logic to create/fetch companions, a `build_system_prompt` function that turns structured data into an actual AI instruction, a companion-creation UI in React, and a working proof that a defined personality genuinely shapes the AI's tone and behavior in conversation.
+
+### Core concepts learned
+
+**Relational vs. document databases — and why "tabular" doesn't mean "no free text"**
+- A column can hold long free text just fine; what defines "relational" is that every row shares the same defined structure, not that field contents are short/simple
+- `jsonb` columns (like `core_traits`) give NoSQL-style flexibility *within* a relational table, for the one field that genuinely varies per-record — a deliberate hybrid, not a workaround
+
+**Context windows are a real limit — but retrieval is the actual fix, not the backstory field**
+- Every AI model has a hard token cap per request; naively sending all accumulated data would eventually break
+- A single companion's Core Identity (name, backstory, style) is small and safely sent in full every time — the real risk was always long-term accumulated memory, which Milestone 4's retrieval design already accounts for
+
+**Prompting/RAG vs. fine-tuning an LLM — genuinely different things**
+- What we're building never touches a model's internal weights — we just control what text gets sent before each response (system prompt + retrieved context)
+- Fine-tuning means retraining internal parameters on a custom dataset — real compute cost, real ML engineering, a different undertaking entirely
+- Prompting + retrieval alone is sufficient for a genuinely good MVP; fine-tuning is a legitimate *future* optimization, not a requirement
+
+**Database schema design**
+- `uuid` primary keys (safer than sequential integer IDs for anything potentially public-facing)
+- `not null` constraints match what's actually required at the application layer (Pydantic schema mirrors the DB's requirements)
+- 📖 https://www.postgresql.org/docs/current/datatype.html
+
+**Migrations as a concept**
+- SQL run directly in Supabase's dashboard doesn't automatically exist anywhere else — `.sql` files saved in the repo are a *record* of what was run, not something that executes on its own
+- Numbered migration files (`001_...`, `002_...`) are the standard way real projects track database schema history alongside code
+
+**Row Level Security (RLS) — a real, live gotcha**
+- Supabase enables RLS by default on new tables: no read/write is allowed until explicit policies are set, even with valid credentials
+- Hit a real `postgrest.exceptions.APIError: new row violates row-level security policy` error, diagnosed via the actual traceback rather than guesswork
+- Temporarily disabled for solo MVP development — explicitly documented as a decision that must be revisited before multi-user/deployment
+- 📖 https://supabase.com/docs/guides/database/postgres/row-level-security
+
+**Supabase Python client (real usage, not just theory)**
+- `.table(...).insert({...}).execute()` and `.table(...).select("*").eq(...).single().execute()` — real CRUD operations without writing raw SQL from the backend
+- 📖 https://supabase.com/docs/reference/python/insert
+
+**Pydantic: `.get()` vs. direct key access, and truthy/falsy defaults**
+- `.get(key, default)` only falls back on a *missing* key — not on a key that exists but holds `None` — a real bug caught by tracing through code manually
+- Fixed using `x or default`, which catches both missing and empty/`None` values — a genuinely reusable pattern
+- Practiced tracing code by hand (manual substitution) and using Python's interactive REPL to verify behavior directly, rather than guessing
+
+**System prompts, for real this time**
+- Gemini's `types.GenerateContentConfig(system_instruction=...)` is the actual mechanism connecting a structured personality to real model behavior
+- Confirmed working: a defined personality (name, relationship, backstory, speaking style, traits) produced consistent, in-character tone across multiple real messages — including natural, unscripted stylistic choices (e.g. code-mixed phrasing) fitting the described character
+- 📖 https://ai.google.dev/gemini-api/docs/generate-content/get-started
+
+**New React patterns**
+- Conditional rendering: `if (!companion) { return (...) }` — same component, different screens, based on state
+- Object state updates via spread: `setForm({ ...form, name: value })` — update one field, preserve the rest
+- Connecting two flows via shared state: the ID returned from creating a companion becomes the identifier used in every subsequent chat request
+
+### Honest note
+Conversation currently *feels* coherent turn-to-turn, but this is mostly the model inferring flow from a consistent personality — the backend isn't yet structurally passing prior conversation turns into each request. That's genuinely Milestone 3's job (Short-Term Memory), not something this milestone actually solved yet, despite how it looks in testing.
+
+Also decided to defer frontend visual design (layout, typography, formatting) to a dedicated checkpoint (Milestone 4.5) rather than polishing incrementally — avoids re-styling the same components repeatedly as functionality changes underneath them.
