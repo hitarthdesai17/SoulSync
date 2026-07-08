@@ -167,3 +167,37 @@ A real `companions` database table, backend logic to create/fetch companions, a 
 Conversation currently *feels* coherent turn-to-turn, but this is mostly the model inferring flow from a consistent personality — the backend isn't yet structurally passing prior conversation turns into each request. That's genuinely Milestone 3's job (Short-Term Memory), not something this milestone actually solved yet, despite how it looks in testing.
 
 Also decided to defer frontend visual design (layout, typography, formatting) to a dedicated checkpoint (Milestone 4.5) rather than polishing incrementally — avoids re-styling the same components repeatedly as functionality changes underneath them.
+
+---
+
+## Milestone 3 — Short-Term Memory
+
+### What we built
+A real `messages` table storing every turn of every conversation, backend logic to persist and retrieve it, and a reshaped AI call that actually sends real conversation history — not just a single message — to the model each time.
+
+### Core concepts learned
+
+**Foreign keys — real relational structure**
+- `companion_id uuid references companions(id)` links the `messages` table to `companions`, and Postgres enforces that every message's companion_id must correspond to an actual existing companion
+- This is the concrete answer to "why use a relational database" from earlier — separate tables, linked by reference, instead of duplicating companion data into every message row
+
+**Deliberate history limits, tied to context window awareness**
+- `get_conversation_history` caps at the most recent 20 messages for now — a conscious, temporary simplification, not the final answer
+- Full-history retrieval via embeddings/relevance (not just recency) is Milestone 4's actual job
+
+**Reshaping data for a specific API's expected format**
+- Gemini's `contents` parameter expects a list of `{"role": ..., "parts": [{"text": ...}]}` objects — a real structural requirement, different from the single-string version used in Milestones 1-2
+- Learned Gemini's role naming differs from Claude's (`model` vs `assistant`) — a good reminder that provider-agnostic design still requires small adapter logic per provider, even if the core function signature stays the same
+
+**Order of operations matters, and was deliberate**
+- Store user message → fetch history (now including that message) → call AI → store AI's reply
+- This ordering is what makes the *next* request's history genuinely complete, not delayed by one turn
+
+**Hallucination, seen directly, not just as a design principle**
+- The AI invented specific unstated details ("Mrs. Sharma," a specific paper-plane incident) despite genuine short-term memory correctly recalling the user's actual name across turns
+- This is expected default LLM behavior (filling vague recollection with vivid, plausible specifics) — not a bug in the memory system just built
+- Directly confirms *why* Phase 3's anti-hallucination rule ("no match found → ask, never guess or invent") exists as a real design requirement, not an abstract concern — Milestone 4's strength/confidence system is what will structurally address this
+- Flagged as a genuine trust/safety consideration specific to companions modeled on real people — invented "memories" of someone real could feel hurtful, not just charming
+
+### Honest note
+Short-term memory is genuinely real and working now. Hallucinated specificity is a known, expected limitation at this stage, not a regression — it's the concrete, lived reason Milestone 4 (confidence-aware long-term memory) matters as a safety feature, not only a functionality one.
