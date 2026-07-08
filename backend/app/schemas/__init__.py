@@ -3,3 +3,4 @@ from pydantic import BaseModel
 
 class MessageRequest(BaseModel):
     message: str
+    companion_id: str

@@ -1,14 +1,18 @@
 import os
 from dotenv import load_dotenv
 from google import genai
+from google.genai import types
 
 load_dotenv()
 
 client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
 
-def get_ai_response(user_message: str) -> str:
+def get_ai_response(user_message: str, system_prompt: str = None) -> str:
+    config = types.GenerateContentConfig(system_instruction=system_prompt) if system_prompt else None
+
     response = client.models.generate_content(
         model="gemini-2.5-flash",
-        contents=user_message
+        contents=user_message,
+        config=config
     )
     return response.text
