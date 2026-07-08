@@ -52,6 +52,7 @@
 - **Dependencies:** M4 (chat + personality + memory all functional, so styling reflects real, near-final structure rather than being redone repeatedly)
 - **Outcome:** SoulSync actually looks like a real product, not a functional prototype — genuinely portfolio/demo-ready
 - **Note:** Deliberately deferred until now rather than done incrementally alongside every milestone, to avoid re-styling the same components repeatedly as functionality changes underneath them
+- **Additional tracked task (found during M4 testing):** `build_system_prompt` currently causes over-repetition of nicknames/affectionate phrasing (e.g. companion using the same pet name in nearly every message) — the model over-anchors on vivid personality details without guidance on natural variation. Fix: add an explicit instruction to `build_system_prompt` telling the model to vary phrasing naturally rather than repeating the same nickname/phrase every message. Bundled into this milestone since it's prompt/tone tuning, same category as the rest of this pass.
 
 ### Milestone 5 — Glossary Memory
 - **Goal:** Personal slang / romanized regional language terms stored and reused
