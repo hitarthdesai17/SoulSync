@@ -44,6 +44,15 @@
 - **Dependencies:** M3
 - **Outcome:** Cross-session memory with realistic confidence/fuzziness
 
+### Milestone 4.5 — Frontend Design Pass (checkpoint, not a feature)
+- **Goal:** Give the UI a real design pass — layout, typography, spacing, visual hierarchy, message alignment/formatting — once core functionality is stable enough that we're not still restructuring components every milestone
+- **Files:** touches existing frontend components (no new backend logic)
+- **Concepts:** Real frontend/UI design principles, not just "add CSS" — proper use of the frontend-design approach for this environment
+- **Difficulty:** Medium (design decisions, not technical complexity)
+- **Dependencies:** M4 (chat + personality + memory all functional, so styling reflects real, near-final structure rather than being redone repeatedly)
+- **Outcome:** SoulSync actually looks like a real product, not a functional prototype — genuinely portfolio/demo-ready
+- **Note:** Deliberately deferred until now rather than done incrementally alongside every milestone, to avoid re-styling the same components repeatedly as functionality changes underneath them
+
 ### Milestone 5 — Glossary Memory
 - **Goal:** Personal slang / romanized regional language terms stored and reused
 - **Files:** extends `services/memory.py`
