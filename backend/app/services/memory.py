@@ -17,11 +17,11 @@ def get_conversation_history(companion_id: str, limit: int = 20) -> list:
         supabase.table("messages")
         .select("*")
         .eq("companion_id", companion_id)
-        .order("created_at")
+        .order("created_at", desc=True)
         .limit(limit)
         .execute()
     )
-    return result.data
+    return list(reversed(result.data))
 
 def store_memory(companion_id: str, content: str):
     embedding = embedding_model.encode(content).tolist()

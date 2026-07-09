@@ -1,25 +1,20 @@
 import os
 from dotenv import load_dotenv
-from google import genai
-from google.genai import types
+from groq import Groq
 
 load_dotenv()
 
-client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
+client = Groq(api_key=os.getenv("GROQ_API_KEY"))
 
-def get_ai_response(conversation_history: str, system_prompt: str = None) -> str:
-    contents = [
-        {"role": msg["role"], "parts": [{"text": msg["content"]}]}
+def get_ai_response(conversation_history: list, system_prompt: str = None) -> str:
+    messages = [{"role": "system", "content": system_prompt}] if system_prompt else []
+    messages += [
+        {"role": "assistant" if msg["role"] == "model" else "user", "content": msg["content"]}
         for msg in conversation_history
     ]
-    config = types.GenerateContentConfig(
-        system_instruction=system_prompt,
-        thinking_config=types.ThinkingConfig(thinking_budget=0)
-    )
 
-    response = client.models.generate_content(
-        model="gemini-2.5-flash",
-        contents=contents,
-        config=config
+    response = client.chat.completions.create(
+        model="llama-3.3-70b-versatile",
+        messages=messages
     )
-    return response.text or "Sorry, I got a bit lost there — could you say that again?"
+    return response.choices[0].message.content or "Sorry, I got a bit lost there — could you say that again?"

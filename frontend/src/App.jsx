@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import './App.css'
 
 function App() {
   const [companion, setCompanion] = useState(null)
@@ -36,32 +37,64 @@ function App() {
 
   if (!companion) {
     return (
-      <div>
-        <h1>Create Your Companion</h1>
-        <input placeholder="Name" value={form.name}
-          onChange={e => setForm({ ...form, name: e.target.value })} />
-        <input placeholder="Relationship (e.g. close friend)" value={form.relationship_type}
-          onChange={e => setForm({ ...form, relationship_type: e.target.value })} />
-        <textarea placeholder="Backstory" value={form.backstory}
-          onChange={e => setForm({ ...form, backstory: e.target.value })} />
-        <input placeholder="Speaking style" value={form.speaking_style}
-          onChange={e => setForm({ ...form, speaking_style: e.target.value })} />
-        <button onClick={createCompanion}>Create</button>
+      <div className="screen">
+        <div className="create-card">
+          <h1 className="create-title">Who do you want to talk to?</h1>
+
+          <div className="field">
+            <label className="field-label">Name</label>
+            <input value={form.name}
+              onChange={e => setForm({ ...form, name: e.target.value })} />
+          </div>
+
+          <div className="field">
+            <label className="field-label">Relationship</label>
+            <input placeholder="e.g. close friend"
+              value={form.relationship_type}
+              onChange={e => setForm({ ...form, relationship_type: e.target.value })} />
+          </div>
+
+          <div className="field">
+            <label className="field-label">Backstory</label>
+            <textarea value={form.backstory}
+              onChange={e => setForm({ ...form, backstory: e.target.value })} />
+          </div>
+
+          <div className="field">
+            <label className="field-label">Speaking style</label>
+            <input value={form.speaking_style}
+              onChange={e => setForm({ ...form, speaking_style: e.target.value })} />
+          </div>
+
+          <button className="create-btn" onClick={createCompanion}>Begin</button>
+        </div>
       </div>
     )
   }
 
   return (
-    <div>
-      <h1>{companion.name}</h1>
-      <div>
+    <div className="chat-screen">
+      <div className="chat-header">
+        <div className="avatar" />
+        <div>
+          <h1 className="companion-name">{companion.name}</h1>
+          <p className="relationship-badge">{companion.relationship_type}</p>
+        </div>
+      </div>
+
+      <div className="messages">
         {messages.map((msg, i) => (
-          <p key={i}><strong>{msg.role}:</strong> {msg.text}</p>
+          <div key={i} className={`bubble ${msg.role === 'user' ? 'user' : 'companion'}`}>
+            {msg.text}
+          </div>
         ))}
       </div>
-      <input value={input} onChange={e => setInput(e.target.value)}
-        onKeyDown={e => e.key === 'Enter' && sendMessage()} />
-      <button onClick={sendMessage}>Send</button>
+
+      <div className="input-bar">
+        <input value={input} onChange={e => setInput(e.target.value)}
+          onKeyDown={e => e.key === 'Enter' && sendMessage()} />
+        <button className="send-btn" onClick={sendMessage}>→</button>
+      </div>
     </div>
   )
 }
