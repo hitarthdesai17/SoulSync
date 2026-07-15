@@ -282,3 +282,41 @@ A fix for the model's tendency to over-repeat nicknames/pet-names every turn, an
 
 ### Honest note
 The visual design pass is intentionally a first pass, not a final one — deliberately kept restrained (one signature animation, no more) rather than over-decorated. Real follow-up ideas (surfacing memory-confidence visually, typing/loading states, empty-state design) were captured for a later revisit rather than attempted all at once, to avoid scope creep on what was meant to be a focused milestone.
+
+---
+
+## Milestone 5 — Glossary Memory (Auto-Detection)
+
+### What we built
+A conversational glossary system: the companion notices unfamiliar Hindi/Gujarati/personal-slang terms mid-conversation, asks about them naturally in its own voice, and — once explained — stores the term permanently via a second, structured extraction call, immune to the decay logic built in Milestone 4.
+
+### Core concepts learned
+
+**Two-call separation: conversational reply vs. structured extraction**
+- Rather than making one model call do double duty (chat *and* reliable data extraction), added a second, dedicated Groq call using the smallest/fastest model (`llama-3.1-8b-instant`) with `temperature=0`
+- `temperature=0` matters specifically here: for a normal chat reply you want variety, but for a call whose output gets parsed as data, you want the most deterministic, repeatable output possible
+- Real reusable pattern: keep "sound human" and "extract structured data" as separate concerns, not one prompt trying to do both
+
+**Backward-compatible function extension**
+- `store_memory(companion_id, content, memory_type="episodic", strength=1.0)` — adding new parameters *with defaults* meant every existing call site (episodic memory storage from Milestone 3/4) kept working unchanged; only the new glossary call site needed to explicitly override `memory_type`
+
+**Decay-immunity as a simple branch, not a new system**
+- `get_relevant_memories()` now checks `memory_type == "glossary"` and skips the exponential decay calculation entirely for those rows, keeping `effective_strength` at its stored value
+- Required verifying the actual live Postgres function definition (`pg_get_functiondef`) rather than assuming `memory_type` was already being returned by `match_memories` — it wasn't, and needed the same drop-and-recreate fix pattern as Milestone 4's `last_reinforced_at` addition
+
+**Negative-example prompting works better than vague positive instructions**
+- "Ask naturally" alone wasn't enough — the model still explained terms in dictionary style ("X means Y, which is [language] for Z") until given an explicit example of the *exact phrasing to avoid*
+- Same lesson repeated a second time when the model, after correctly asking and learning a term, then restated the definition back unprompted — fixed only once told explicitly not to confirm it back
+
+**Confident hallucination recurs in a new domain: language, not just memory**
+- Real test case: the model encountered "Panchat kehvay" (unfamiliar Gujarati), broke it into familiar-sounding fragments, and confidently invented a plausible but entirely wrong translation — rather than admitting uncertainty and asking, despite an existing instruction to do exactly that
+- This is the same failure mode documented in Milestone 3 (inventing "Mrs. Sharma," a specific incident) showing up again in a new surface area — partial pattern-recognition can make a model feel falsely confident, overriding an "ask when unsure" instruction that only triggers when the model recognizes its own uncertainty
+- Fixed with an explicit anti-guessing rule: don't decompose or reconstruct meaning from familiar-looking fragments unless genuinely certain
+- Real lesson: passing one test case (e.g. "SKC" being guessed correctly) is not proof a guessing-prevention instruction is solid — it may just mean that particular guess happened to be right
+
+**Consolidating iterative prompt patches into one structured block**
+- After several rounds of small, targeted fixes (pet-name variation, glossary tone, anti-guessing), merged them into one comprehensive, well-organized system-prompt section rather than letting one-off patches accumulate
+- Real reason this matters: multiple overlapping instructions competing for the model's attention risk diluting each other or producing subtly conflicting guidance — a single, coherent voice is more reliable than a pile of patches
+
+### Honest note
+Getting the tone right took several real iterations, not one clean pass — first the model over-explained, then it explained-but-briefly, then it recognized-but-confirmed-back, then it recognized-and-moved-on but separately produced a confident wrong guess on an unfamiliar term it should have asked about instead. Each round surfaced a genuinely distinct failure mode rather than the same bug resurfacing, which is the real reason this milestone needed more prompting rounds than Milestone 4.5's simpler pet-name fix.

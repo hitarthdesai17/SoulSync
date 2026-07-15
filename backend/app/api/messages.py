@@ -6,7 +6,10 @@ from fastapi import APIRouter
 from app.schemas import MessageRequest
 from app.services.conversation_engine import get_ai_response
 from app.services.personality import get_companion, build_system_prompt
-from app.services.memory import store_message, get_conversation_history, store_memory, get_relevant_memories
+from app.services.memory import (
+    store_message, get_conversation_history, store_memory,
+    get_relevant_memories, reinforce_memory, extract_glossary_entry
+)
 
 router = APIRouter()
 
@@ -30,6 +33,15 @@ def send_message(request: MessageRequest):
     store_memory(request.companion_id, request.message)
 
     history = get_conversation_history(request.companion_id)
+
+    if len(history) >= 2 and history[-2]["role"] == "model":
+        glossary_entry = extract_glossary_entry(history[-2]["content"], request.message)
+        if glossary_entry:
+            store_memory(
+                request.companion_id,
+                f"{glossary_entry['term']} means {glossary_entry['meaning']}",
+                memory_type="glossary"
+            )
     reply = get_ai_response(history, system_prompt)
 
     store_message(request.companion_id, "model", reply)
