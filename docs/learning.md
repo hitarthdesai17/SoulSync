@@ -320,3 +320,30 @@ A conversational glossary system: the companion notices unfamiliar Hindi/Gujarat
 
 ### Honest note
 Getting the tone right took several real iterations, not one clean pass — first the model over-explained, then it explained-but-briefly, then it recognized-but-confirmed-back, then it recognized-and-moved-on but separately produced a confident wrong guess on an unfamiliar term it should have asked about instead. Each round surfaced a genuinely distinct failure mode rather than the same bug resurfacing, which is the real reason this milestone needed more prompting rounds than Milestone 4.5's simpler pet-name fix.
+
+---
+
+## Milestone 6 — Emotion Model (Prompt-Based)
+
+### What we built
+A prompt-only emotion model (no separate classification call) — extending the existing "Emotional Intelligence" section from Milestone 5's consolidated system prompt with two new pieces: handling conflicts between what the user explicitly asks for and what their emotional state suggests they need, and tracking emotional tone *across* several messages rather than reacting to each one in isolation.
+
+### Core concepts learned
+
+**Emotion detection doesn't need a separate service to start**
+- Chose the prompt-based approach over a structured classification call (the pattern used for glossary extraction in M5) since the roadmap itself flagged this as "genuinely hard — expect imperfection," making the added complexity of a dedicated detection step less justified until the simpler approach is proven insufficient
+- `services/emotion.py` remains a stub for now — the actual "detection" is happening implicitly inside the same conversational reply, not as a separate labeled step
+
+**Per-message reactions aren't enough — conversations need continuity of read**
+- Real test case: three consecutive low-energy replies ("it was mid mid," "haha sure," "hope so") were each individually plausible as casual, but taken together clearly signaled flatness — and the model kept escalating cheerful energy across all three instead of noticing the pattern
+- Fixed by adding an explicit "carry the emotional thread forward" instruction plus concrete example phrases to watch for — the model needed to be told to look at the *sequence*, not just the current message
+
+**A direct request can still override established mood context**
+- Real test case: after several low-energy messages, when directly asked for "random facts or jokes," the model gave dense, information-heavy trivia rather than something light — momentarily reverting to a helpful/informative default despite already having picked up on the low-energy pattern elsewhere in the same conversation
+- Fixed with an instruction to match the *weight* of a response to the established mood, even when fulfilling an explicit request — a genuinely different failure mode from simply "not noticing" mood, since the model clearly had noticed it moments earlier and still didn't apply it consistently
+
+**Real, honest limits of prompt-based emotion handling**
+- Across one long, emotionally varied test conversation (casual banter → low energy → a real disclosure — "she left" — → sitting with sadness), the model held up well on serious tonal shifts (no forced positivity, no trying to "fix" the moment) — the harder failures were more about consistency of applying an already-correct read, not about missing the emotional signal in the first place
+
+### Honest note
+Unlike Milestone 5's failures (distinct, separate bugs each needing its own fix), Milestone 6's issues were more about *consistency* — the model would correctly read the room in one moment and then not carry that same read into its next response. This is a genuinely harder class of problem to fully solve with prompting alone, and worth remembering that "fixed" here means "meaningfully improved and tested against one real scenario," not "guaranteed correct in all future conversations" — sarcasm and mood-tracking remain inherently imperfect, exactly as the roadmap anticipated going in.
